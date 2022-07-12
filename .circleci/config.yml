@@ -32,7 +32,19 @@ jobs:
           paths: [backend/node_modules]
           key: backend-build
 
-
+  test-frontend:
+    docker:
+      - image: circleci/node:13.8.0
+    steps:
+      - checkout
+      - run: npm i
+      - run:
+          name: Run Frondend Test
+          command:  |
+              cd frontend
+              npm install
+              npm run test
+                
   test-backend:
     docker:
       - image: circleci/node:13.8.0
@@ -41,19 +53,11 @@ jobs:
       - run: npm i
       - run:
           name: Run Backend Test
-          command:
-
-
-  test-backend:
-    docker:
-      - image: circleci/node:13.8.0
-    steps:
-      - checkout
-      - run: npm i
-      - run:
-          name: Run Backend Test
-          command:
-
+          command:  |
+              cd backend
+              npm install
+              npm run test
+              
 
   scan-frontend:
     docker:
