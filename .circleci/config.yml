@@ -51,7 +51,12 @@ jobs:
     steps:
       - checkout
       - run: npm i
-      - run: npm run test 
+      - run:
+          name: Run Backend Test
+          command:  |
+              cd backend
+              npm install
+              npm run test
 
 
 workflows:
