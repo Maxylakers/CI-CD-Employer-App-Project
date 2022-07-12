@@ -38,7 +38,12 @@ jobs:
     steps:
       - checkout
       - run: npm i
-      - run: npm run test
+      - run:
+          name: Run Frondend Test
+          command:  |
+              cd frontend
+              npm install
+              npm run test
                 
   test-backend:
     docker:
