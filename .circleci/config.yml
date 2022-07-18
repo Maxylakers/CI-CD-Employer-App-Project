@@ -19,15 +19,15 @@ commands:
       - run: echo << parameters.id >>
 
  # Exercise - Rollback
-  destroy-environment:
+  destroy_environment:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
     parameters:
       # Add parameter here   
     steps:
       - run:
           name: Destroy environments
-          ${CIRCLE_WORKFLOW_ID}
-          ${CIRCLE_WORKFLOW_ID:0:7}
+          # ${CIRCLE_WORKFLOW_ID}
+          # ${CIRCLE_WORKFLOW_ID:0:7}
           when: on_fail
           command: |
             aws cloudformation delete-stack --stack-name myStack-${CIRCLE_WORKFLOW_ID:0:7}
