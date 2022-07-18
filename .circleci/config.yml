@@ -126,6 +126,18 @@ jobs:
       - image: amazon/aws-cli
     steps:
       - checkout
+      # - run:
+      #     name: Create Cloudformation Stack
+      #     command: |
+      #       aws cloudformation deploy \
+      #         --template-file template.yml \
+      #         --stack-name myStack-${CIRCLE_WORKFLOW_ID:0:7} \
+      #         --region us-east-1
+      #     # Fail the job intentionally to simulate an error.
+      #     # Uncomment the line below if you want to fail the current step
+      #     # - run: return 1
+      # - destroy_environment
+
       - run:
           name: Ensure back-end infrastructure exists
           command: |
@@ -152,17 +164,6 @@ jobs:
       # - run: return 1
       - destroy_environment
 
-      - run:
-          name: Create Cloudformation Stack
-          command: |
-            aws cloudformation deploy \
-              --template-file template.yml \
-              --stack-name myStack-${CIRCLE_WORKFLOW_ID:0:7} \
-              --region us-east-1
-          # Fail the job intentionally to simulate an error.
-          # Uncomment the line below if you want to fail the current step
-          # - run: return 1
-      - destroy_environment
 
       - run:
           name: Add back-end ip to ansible inventory
