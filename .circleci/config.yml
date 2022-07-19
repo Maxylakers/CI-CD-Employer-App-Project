@@ -157,7 +157,7 @@ jobs:
             aws ec2 describe-instances
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
               --output text >> .circleci/ansible/inventory.txt \
-              --filters "Name=tag:Project,Values=udacity"
+              --filters "Name=tag:project,Values=udapeople"
       - persist_to_workspace:
           root: ~/
           paths:
