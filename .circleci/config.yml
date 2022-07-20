@@ -132,7 +132,7 @@ jobs:
               --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}" \
               --tags project=udapeople 
-      # Fail the job intentionally to simulate an error .
+      # Fail the job intentionally to  simulate an error .
       # Uncomment the line below if you want to fail the current step
       # - run: return 1 
       - destroy_environment
