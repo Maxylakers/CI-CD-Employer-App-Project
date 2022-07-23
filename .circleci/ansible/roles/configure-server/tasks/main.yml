@@ -7,7 +7,12 @@
 - name: "upgrade packages."
   become: true
   apt:
-    upgrade: "yes"
+    upgrade: yes
+
+- name: remove dependencies that are no longer required
+  become: true
+  apt:
+    autoremove: yes
 
 - name: "install dependencies."
   become: true
