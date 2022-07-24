@@ -10,7 +10,7 @@ orbs:
 
 commands:
 
-  # Uncomment to pass install_ansible as a variable.
+  # Uncomment to pass install_ansible as a variable .
   # install_ansible:
   #   description: Install Ansible
   #   steps:
