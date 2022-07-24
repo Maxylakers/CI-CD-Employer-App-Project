@@ -243,8 +243,7 @@ jobs:
             cd backend
             npm install
             npm run build
-            touch migrations_log.txt
-            sudo  npm run migrations  >> migrations_log.txt
+            npm run migrations > migrations_log.txt
             cat migrations_log.txt
       - run:
           name: Send migration results to kvdb
