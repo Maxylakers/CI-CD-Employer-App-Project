@@ -271,6 +271,7 @@ jobs:
             apk add --update ansible
             pip install awscli
             apk add curl
+            yum install -y tar
             sudo apt install nodejs
             sudo apt install python3
       - run:
