@@ -259,7 +259,7 @@ jobs:
 
   deploy_frontend:
     docker:
-      - image: amazon/aws-cli
+      - image: python:3.10-alpine3.16
     steps:
       - checkout
       - attach_workspace:
