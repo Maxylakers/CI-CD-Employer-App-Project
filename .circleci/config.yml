@@ -267,12 +267,13 @@ jobs:
       - run:
           name: Install dependencies
           command: |
+            sudo apt install npm
+            sudo apt install nodejs
             npm install
             apk add --update ansible
             pip install awscli
             apk add curl
             yum install -y tar gzip
-            sudo apt install nodejs
             sudo apt install python3
       - run:
           name: Get backend url
