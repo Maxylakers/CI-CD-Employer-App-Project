@@ -10,17 +10,39 @@ orbs:
 
 commands:
 
+  # Command to install awscli for reusability
+  install_awscli:
+    description: Install AWS cli
+    steps:
+      - run:
+          name: Install AWS cli
+          command: |
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
+
+
+  # Command to install Nodejs fr reusability
+  install_nodejs:
+     description: Install Node.js 13
+     steps:
+      - run:
+          name: Install Node.js 13
+          command: |
+            curl -fsSL https://deb.nodesource.com/setup_13.x | sudo -E bash -
+            sudo apt install -y nodejs
+
   # Uncomment to pass install_ansible as a variable .
-  # install_ansible:
-  #   description: Install Ansible
-  #   steps:
-  #     - run:
-  #         name: Install Ansible
-  #         command: |
-  #           sudo apt update
-  #           sudo apt install software-properties-common -y
-  #           sudo add-apt-repository --yes --update ppa:ansible/ansible
-  #           sudo apt install ansible -y
+  install_ansible:
+    description: Install Ansible
+    steps:
+      - run:
+          name: Install Ansible
+          command: |
+            sudo apt update
+            sudo apt install software-properties-common -y
+            sudo add-apt-repository --yes --update ppa:ansible/ansible
+            sudo apt install ansible -y
 
   # Exercise: Reusable Job Code
   print_pipeline_id:
@@ -278,19 +300,15 @@ jobs:
       - image: cimg/base:stable
     steps:
       - checkout
+      - add_ssh_keys:
+          fingerprint: ["b6:3d:88:66:ad:5e:da:ef:bd:20:4b:c2:8c:d9:71:16"]
       - attach_workspace:
           at: ~/
-      - run:
-          name: Install dependencies
-          command: |
-            sudo apt install nodejs
-            sudo apt install npm
-            npm install
-            apk add --update ansible
-            pip install awscli
-            apk add curl
-            yum install -y tar gzip
-            sudo apt install python3
+
+      # Install dependencies
+      - install_nodejs
+      - install_awscli
+      - install_ansible
       - run:
           name: Get backend url
           command: |
@@ -309,13 +327,53 @@ jobs:
           command: |
             # your code here
             cd frontend
+            sudo npm install -g npm@latest
+            rm -rf node_modules
             npm install
             npm run build
             tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
       # Here's where you will add some code to rollback on failure
       # - destroy_environment:
-          # workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+
+
+
+  deploy_backend:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - Checkout
+      - add_ssh_keys:
+          fingerprint: ["b6:3d:88:66:ad:5e:da:ef:bd:20:4b:c2:8c:d9:71:16"]
+      - attach_workspace:
+          at: ~/
+
+      # Install dependencies
+      - install_nodejs
+      - install_awscli
+      - install_ansible
+
+      - run:
+          name: Deploy backend
+          command: |
+            cd backend
+            
+            npm i
+            npm run build
+            cd ..
+            cd .circleci/ansible
+            mkdir files
+            cd files
+            tar -C ../../../backend -czvf artifact.tar.gz .
+            cd ../
+            
+            echo "Contents  of the inventory.txt file is -------"
+            cat inventory.txt
+            ansible-playbook -i inventory.txt deploy-backend.yml
+      # Here's where you will add some code to rollback on failure  
+      - destroy-environment
+      - revert-migrations
+
 
 
 
@@ -342,4 +400,6 @@ workflows:
       - run_migrations:
           requires: [configure_infrastructure]
       - deploy_frontend:
+          requires: [run_migrations]
+      - deploy_backend:
           requires: [run_migrations]
