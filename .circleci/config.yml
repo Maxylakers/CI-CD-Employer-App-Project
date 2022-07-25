@@ -103,6 +103,9 @@ jobs:
           name: Build front-end
           command: |
             # Your code here
+            cd frontend
+            npm install
+            npm run build
       - save_cache:
           paths: [frontend/node_modules]
           key: frontend-build
@@ -119,6 +122,9 @@ jobs:
           name: Back-end build
           command: |
              # Your code here
+            cd backend
+            npm install
+            npm run build
       - save_cache:
           paths: [backend/node_modules]
           key: backend-build
@@ -374,6 +380,49 @@ jobs:
       - destroy_environment
       - revert_migrations
 
+  smoke_test:
+    docker:
+      - image: alpine:latest 
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update curl
+      - run:
+          name: Get backend url
+          command: |
+            BACKEND_PUBLIC_IP=$(aws ec2 describe-instances \
+              --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+              --output text)
+            export API_URL=http://${BACKEND_PUBLIC_IP}:3030
+            echo ${BACKEND_PUBLIC_IP}
+            echo backend-${CIRCLE_WORKFLOW_ID:0:7}
+            echo ${API_URL}
+      - run:
+          name: Backend smoke test.
+          command: |
+            if curl -s $API_URL/api/status | grep "ok"
+            then
+              return 0
+            else
+              return 1
+            fi
+      - run:
+          name: Frontend smoke test.
+          command: |
+            # your code here
+            FRONTEND_WEBSITE=http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website.${AWS_DEFAULT_REGION}.amazonaws.com
+            echo $FRONTEND_WEBSITE
+            if curl -s $FRONTEND_WEBSITE | grep "Welcome"
+            then
+              return 1
+            else
+              return 1
+            fi
+      # Here's where you will add some code to rollback on failure  
+
 
 
 
@@ -403,3 +452,5 @@ workflows:
           requires: [run_migrations]
       - deploy_backend:
           requires: [run_migrations]
+      - smoke_test:
+          requires: [deploy_backend, deploy_frontend]
