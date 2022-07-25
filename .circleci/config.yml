@@ -342,7 +342,7 @@ jobs:
     docker:
       - image: cimg/base:stable
     steps:
-      - Checkout
+      - checkout
       - add_ssh_keys:
           fingerprint: ["b6:3d:88:66:ad:5e:da:ef:bd:20:4b:c2:8c:d9:71:16"]
       - attach_workspace:
@@ -357,7 +357,7 @@ jobs:
           name: Deploy backend
           command: |
             cd backend
-            
+
             npm i
             npm run build
             cd ..
