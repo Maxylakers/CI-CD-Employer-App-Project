@@ -382,7 +382,7 @@ jobs:
 
   smoke_test:
     docker:
-      - image: alpine:latest 
+      - image: cimg/base:stable 
     steps:
       - checkout
       - run:
