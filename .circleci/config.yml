@@ -388,7 +388,6 @@ jobs:
         #  Install dependencies
       - install_nodejs
       - install_awscli
-      - install_ansible
       - run:
           name: Get backend url
           command: |
@@ -400,9 +399,6 @@ jobs:
             echo ${BACKEND_PUBLIC_IP}
             echo backend-${CIRCLE_WORKFLOW_ID:0:7}
             echo ${API_URL}
-      - run:
-          name: Backend smoke test.
-          command: |
             if curl -s $API_URL/api/status | grep "ok"
             then
               return 0
