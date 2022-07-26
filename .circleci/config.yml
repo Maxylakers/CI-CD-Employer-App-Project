@@ -389,8 +389,7 @@ jobs:
       - install_nodejs
       - install_awscli
       - run:
-          name: Get backend url
-          command: |
+          name: backend smoke test
             BACKEND_PUBLIC_IP=$(aws ec2 describe-instances \
               --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
@@ -417,7 +416,32 @@ jobs:
             else
               exit 1
             fi
-      # Here's where you will add some code to rollback on failure  
+      # Here's where you will add some code to rollback on failure 
+      - destroy_environment
+      - revert_migrations  
+
+  cloudfront_update:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - run:
+          name: Install dep / Save Old Workflow ID to kvdb.io
+          command: |
+            export OLD_WORKFLOW_ID=$(aws cloudformation \
+            list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
+            --no-paginate --output text)
+            echo "Old Wokflow ID: $OLD_WORKFLOW_ID"
+            curl https://kvdb.io/159zKKqso4ouKpw7t7N1Wq/old_workflow_id -d "${OLD_WORKFLOW_ID}"
+      - run:
+          name: Update cloudfront distribution
+          command: |
+            aws cloudformation deploy \
+            --template-file .circleci/files/cloudfront.yml \
+            --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}" \
+            --stack-name InitialStack
+      - destroy_environment
+      - revert_migrations 
 
 
 
@@ -435,18 +459,20 @@ workflows:
           requires: [test-frontend]
       - scan-backend:
           requires: [test-backend]
-      - deploy_infrastructure:
-          requires: [test-frontend, test-backend, scan-frontend, scan-backend]
-          filters:
-            branches:
-              only: [master]
-      - configure_infrastructure:
-          requires: [deploy_infrastructure]
-      - run_migrations:
-          requires: [configure_infrastructure]
-      - deploy_frontend:
-          requires: [run_migrations]
-      - deploy_backend:
-          requires: [run_migrations]
-      - smoke_test:
-          requires: [deploy_backend, deploy_frontend]
+      # - deploy_infrastructure:
+      #     requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+      #     filters:
+      #       branches:
+      #         only: [master]
+      # - configure_infrastructure:
+      #     requires: [deploy_infrastructure]
+      # - run_migrations:
+      #     requires: [configure_infrastructure]
+      # - deploy_frontend:
+      #     requires: [run_migrations]
+      # - deploy_backend:
+      #     requires: [run_migrations]
+      # - smoke_test:
+      #     requires: [deploy_backend, deploy_frontend]
+      # - cloudfront_update:
+      #     requires: [smoke_test]
