@@ -385,10 +385,10 @@ jobs:
       - image: cimg/base:stable 
     steps:
       - checkout
-      - run:
-          name: Install dependencies
-          command: |
-            apk add --update curl
+        #  Install dependencies
+      - install_nodejs
+      - install_awscli
+      - install_ansible
       - run:
           name: Get backend url
           command: |
