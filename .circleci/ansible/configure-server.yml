@@ -42,4 +42,4 @@
     # Add more env vars here if needed
 
   roles:
-    - configure-server
+     - configure-server
