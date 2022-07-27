@@ -9,8 +9,11 @@
     - ansible_host_key_checking: false
     - ansible_stdout_callback: yaml
 
+  # Get the environment variables from CircleCI and add to the EC2 instance
   environment:
     - TYPEORM_CONNECTION: "{{ lookup('env', 'TYPEORM_CONNECTION')}}"  
+    # Add more env vars here
+    # Get the environment variables from CircleCI and add to the EC2 instance
     - TYPEORM_ENTITIES: "{{ lookup('env', 'TYPEORM_ENTITIES')}}"
     - TYPEORM_HOST: "{{ lookup('env', 'TYPEORM_HOST')}}"
     - TYPEORM_PORT: 5432
