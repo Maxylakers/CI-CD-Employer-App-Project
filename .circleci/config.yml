@@ -129,58 +129,103 @@ jobs:
           paths: [backend/node_modules]
           key: backend-build
 
-  test-frontend:
+  test_frontend:
     docker:
+      # Docker image here
       - image: circleci/node:13.8.0
     steps:
+      # Checkout code from git
       - checkout
-      - run: npm i
+      # Restore from cache
+      
+      - restore_cache:
+          keys: [frontend-test]
+      # Your job code here
       - run:
-          name: Run Frondend Test
-          command:  |
-              cd frontend
-              npm install
-              npm run test
+          name: Frontend test
+          command: |
+            # Your code here
+            cd frontend
+            npm install
+            npm run test
+      - save_cache:
+          paths: [frontend/node_modules]
+          key: frontend-test
                 
-  test-backend:
+  test_backend:
     docker:
+      # Docker image here
       - image: circleci/node:13.8.0
     steps:
+      # Checkout code from git
       - checkout
-      - run: npm i
+      # Restore from cache
+      
+      - restore_cache:
+          keys: [backend-test]
+      # Your job code here
       - run:
-          name: Run Backend Test
-          command:  |
-              cd backend
-              npm install
-              npm run test
+          name: Backend test
+          command: |
+            # Your code here
+            cd backend
+            npm install
+            npm run test
+      - save_cache:
+          paths: [backend/node_modules]
+          key: backend-test
               
 
-  scan-frontend:
+  scan_frontend:
     docker:
+      # Docker image here
       - image: circleci/node:13.8.0
     steps:
+      # Checkout code from git
       - checkout
-      - run: npm i
+      # Restore from cache
+      
+      - restore_cache:
+          keys: [scanfrontend-test]
+      # Your job code here
       - run:
-          name: Run Frondend Test
-          command:  |
-              cd frontend
-              npm install
-              npm audit fix --audit-level=critical --force
+          name: Scan-Frontend
+          command: |
+            # Your code here
+            cd frontend
+            npm install
+            # npm install oauth-sign@^0.9.0
+            npm audit fix --audit-level=critical --force
+            npm audit --audit-level=critical
+      - save_cache:
+          paths: [frontend/node_modules]
+          key: scanfrontend-test
                 
-  scan-backend:
+  scan_backend:
     docker:
+        # Docker image here
       - image: circleci/node:13.8.0
     steps:
+      # Checkout code from git
       - checkout
-      - run: npm i
+      # Restore from cache
+      
+      - restore_cache:
+          keys: [scanbackend-test]
+      # Your job code here
       - run:
-          name: Run Backend Test
-          command:  |
-              cd backend
-              npm install
-              npm audit fix --audit-level=critical --force
+          name: Scan-Backend
+          command: |
+            # Your code here
+            cd backend
+            npm install
+            # npm install oauth-sign@^0.9.0
+            npm audit fix --audit-level=critical --force
+            npm audit fix --audit-level=critical --force
+            npm audit --audit-level=critical
+      - save_cache:
+          paths: [backend/node_modules]
+          key: scanbackend-test
 
 
 
@@ -245,34 +290,25 @@ jobs:
 
   configure_infrastructure:
     docker:
-      - image: python:3.7-alpine3.11
+      # Docker image here that supports Ansible
+      - image: cimg/base:stable
     steps:
       - checkout
       - add_ssh_keys:
-          fingerprint: ["b6:3d:88:66:ad:5e:da:ef:bd:20:4b:c2:8c:d9:71:16"]
+          fingerprints:
+            - "b6:3d:88:66:ad:5e:da:ef:bd:20:4b:c2:8c:d9:71:16"
       - attach_workspace:
           at: ~/
-      #- run: cat .circleci/ansible/inventory.txt
-      - run:
-          name: Install dependencies
-          command: |
-            apk add --update ansible
-            pip install awscli
-            apk add curl
-            cat .circleci/ansible/inventory.txt
+    
+      - install_ansible    
+      - install_awscli
       - run:
           name: Configure server
           command: |
             cd .circleci/ansible
             cat inventory.txt
             ansible-playbook -i inventory.txt configure-server.yml
-      # Here's where you will add some code to rollback on failure  
-
-      # - run:
-      #     name: Install AWS CLI for rollback
-      #     when: on_fail
-      #     command: |
-      #       apk add --update py3-pip && pip3 install --upgrade pip && pip3 install awscli
+      - destroy_environment
 
 
 
@@ -304,12 +340,13 @@ jobs:
       - image: cimg/base:stable
     steps:
       - checkout
+
       - add_ssh_keys:
-          fingerprint: ["b6:3d:88:66:ad:5e:da:ef:bd:20:4b:c2:8c:d9:71:16"]
+          fingerprints: 
+            - "b6:3d:88:66:ad:5e:da:ef:bd:20:4b:c2:8c:d9:71:16"
       - attach_workspace:
           at: ~/
 
-      # Install dependencies 
       - install_nodejs
       - install_awscli
       - install_ansible
@@ -323,21 +360,20 @@ jobs:
             --output text 
             )
             export API_URL="http://${BACKEND_IP}:3030"
-            echo "${API_URL}"
+            echo "API_URL = ${API_URL}"
             echo API_URL="http://${BACKEND_IP}:3030" >> frontend/.env
             cat frontend/.env
       - run:
           name: Deploy frontend objects
           command: |
-            # your code here
             cd frontend
             sudo npm install -g npm@latest
             rm -rf node_modules
             npm install
             npm run build
             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
-      # Here's where you will add some code to rollback on failure
-      # - destroy_environment:
+      - destroy_environment
+      - revert_migrations
 
 
 
@@ -345,22 +381,21 @@ jobs:
     docker:
       - image: cimg/base:stable
     steps:
+      # Add ssh keys with fingerprint
+      # attach workspace
       - checkout
       - add_ssh_keys:
-          fingerprint: ["b6:3d:88:66:ad:5e:da:ef:bd:20:4b:c2:8c:d9:71:16"]
+          fingerprints: 
+            - "b6:3d:88:66:ad:5e:da:ef:bd:20:4b:c2:8c:d9:71:16"
       - attach_workspace:
           at: ~/
-
-      # Install dependencies
       - install_nodejs
       - install_awscli
       - install_ansible
-
       - run:
           name: Deploy backend
           command: |
             cd backend
-
             npm i
             npm run build
             cd ..
@@ -373,7 +408,6 @@ jobs:
             echo "Contents  of the inventory.txt file is -------"
             cat inventory.txt
             ansible-playbook -i inventory.txt deploy-backend.yml
-      # Here's where you will add some code to rollback on failure  
       - destroy_environment
       - revert_migrations
 
